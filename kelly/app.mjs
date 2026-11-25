@@ -1,5 +1,5 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-5';
-import {installFinance} from './finance.mjs?v=20261126-5';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-6';
+import {installFinance} from './finance.mjs?v=20261126-6';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';

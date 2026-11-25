@@ -1,4 +1,4 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-5';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-6';
 
 export function winProbabilityForPrices(target,current,profit,loss){
   const {a,b}=priceReturns(current,profit,loss);
@@ -66,7 +66,12 @@ export function installFinance(api) {
     if(inputMode!=='prices')return;
     for(const id of ['current','profit','loss']){
       const slider=$(id+'-slider'),value=Number($(id).value);
-      if(Number.isFinite(value)&&value>Number(slider.max))slider.max=String(Math.ceil(value*2));
+      if(id==='current'){
+        const lower=$('loss').value,upper=$('profit').value;
+        const valid=lower.trim()!==''&&upper.trim()!==''&&Number.isFinite(Number(lower))&&Number.isFinite(Number(upper))&&Number(lower)>=0&&Number(upper)>Number(lower);
+        slider.disabled=!valid;
+        if(valid){slider.min=lower;slider.max=upper;}
+      }else if(Number.isFinite(value)&&value>Number(slider.max))slider.max=String(Math.ceil(value*2));
       slider.value=$(id).value;
     }
     const rates=priceReturns($('current').value,$('profit').value,$('loss').value);
