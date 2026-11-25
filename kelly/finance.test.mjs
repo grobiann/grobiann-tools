@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {priceReturns,validateSnapshot} from './finance.mjs';
+import {priceReturns,validateSnapshot,winProbabilityForPrices} from './finance.mjs';
 test('price inputs convert relative to current price',()=>{
   assert.deepEqual(priceReturns('100','120','80'),{a:.2,b:.2});
   assert.deepEqual(priceReturns('200','300','0'),{a:.5,b:1});
@@ -13,4 +13,16 @@ test('stored prices survive precision and produce matching Kelly result',()=>{
   assert.equal(validateSnapshot({...raw,p:'100'}).model.kelly,Infinity);
   assert.throws(()=>validateSnapshot({...raw,current:''}));assert.throws(()=>validateSnapshot({...raw,p:'101'}));
   assert.throws(()=>validateSnapshot({...raw,inputMode:'bad'}));
+});
+
+test('locked allocation inversely solves probability without rounding drift',()=>{
+  for(const target of [0,.5,1,1.5])for(const current of [90,100,110]){
+    const p=winProbabilityForPrices(target,current,120,80);
+    const {a,b}=priceReturns(current,120,80);
+    assert.ok(Math.abs(p/b-(1-p)/a-target)<1e-12);
+  }
+  assert.equal(winProbabilityForPrices(1,100,120,80),.6);
+  assert.throws(()=>winProbabilityForPrices(1.5,100,120,0));
+  assert.throws(()=>winProbabilityForPrices(1,100,120,0));
+  assert.throws(()=>winProbabilityForPrices(1,120,120,80));
 });

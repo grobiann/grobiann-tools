@@ -1,5 +1,5 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-3';
-import {installFinance} from './finance.mjs?v=20261126-3';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-4';
+import {installFinance} from './finance.mjs?v=20261126-4';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';
@@ -19,7 +19,9 @@ function update(reset=true) {
     $('edge').textContent=percent(model.edge);$('kelly').textContent=Number.isFinite(model.kelly)?percent(model.kelly):'상한 없음';
     $('f').max=Math.min(150,Math.floor(model.maxFraction*100/5)*5);$('f').disabled=false;$('invert').disabled=false;
     document.querySelector('.metrics').style.setProperty('--expectation-color',model.edge<0?'#c23838':model.edge>0?'#12804f':'#536d5f');
-    if(reset) $('f').value=Math.min(model.kelly*100,Number($('f').max));
+    const fixedTarget=finance.targetFraction?.();
+    if(fixedTarget!=null){$('f').max=Math.max(Number($('f').max),fixedTarget*100);$('f').value=fixedTarget*100;}
+    else if(reset) $('f').value=Math.min(model.kelly*100,Number($('f').max));
     for(const id of fields){const slider=$(id+'-slider');slider.value=$(id).value;}
     try {localStorage.setItem('kelly-inputs-v2',JSON.stringify(Object.fromEntries(fields.map(id=>[id,$(id).value]))));} catch {}
     draw();finance.afterUpdate?.(true);
@@ -60,7 +62,7 @@ for(const id of fields){
   input.addEventListener('blur',()=>{if(input.value.trim()==='')input.value=previous;update();});
 }
 for(const id of fields)$(id+'-slider').addEventListener('input',()=>{$(id).value=$(id+'-slider').value;update();});
-$('f').addEventListener('input',()=>{if(!model)return;const max=Number($('f').max),step=5,raw=Number($('f').value);const snapped=raw>=max-step/2?max:Math.round(raw/step)*step;$('f').value=snapped;const f=Math.min(snapped/100,model.maxFraction);$('p').value=Number((requiredWinProbability(f,model.a,model.b)*100).toFixed(6));update(false);});
+$('f').addEventListener('input',()=>{if(!model)return;const max=Number($('f').max),step=5,raw=Number($('f').value);const snapped=raw>=max-step/2?max:Math.round(raw/step)*step;$('f').value=snapped;const f=Math.min(snapped/100,model.maxFraction);finance.changeTarget?.(f);$('p').value=Number((requiredWinProbability(f,model.a,model.b)*100).toFixed(6));update(false);});
 for(const id of ['arithmetic','geometric']) $(id).addEventListener('click',()=>{mode=id;for(const tab of ['arithmetic','geometric'])$(tab).setAttribute('aria-pressed',String(tab===id));draw();});
 $('invert').addEventListener('click',()=>{
   if(!model)return;

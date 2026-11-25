@@ -1,4 +1,10 @@
-import {calculateKelly} from './kelly.mjs?v=20261126-3';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-4';
+
+export function winProbabilityForPrices(target,current,profit,loss){
+  const {a,b}=priceReturns(current,profit,loss);
+  if(!Number.isFinite(target)||target<0||target*b>=1)throw Error('이 가격에서는 목표 투자비중을 유지할 수 없습니다. 가격을 조정하거나 고정을 해제하세요.');
+  return requiredWinProbability(target,a,b);
+}
 
 export function priceReturns(current, profit, loss) {
   const values=[current,profit,loss];
@@ -23,19 +29,33 @@ export function validateSnapshot(value) {
 export function installFinance(api) {
   if(new URLSearchParams(location.search).get('mode')!=='finance'||window.parent===window)return;
   const $=id=>document.getElementById(id);
-  let parentOrigin=null,inputMode='rates',records=[];
+  let parentOrigin=null,inputMode='rates',records=[],lockedTarget=null;
   const bar=document.createElement('div');bar.className='finance-toolbar';bar.hidden=true;
   bar.innerHTML='<div class="tabs" role="group" aria-label="입력 방식"><button id="rates-mode" aria-pressed="true">수익률 입력</button><button id="prices-mode" aria-pressed="false">가격 입력</button></div>';
   document.querySelector('.calculator').prepend(bar);
   const prices=document.createElement('div');prices.className='inputs price-inputs';prices.hidden=true;
   prices.innerHTML='<label for="current">현재가격<div class="field"><input id="current" type="number" min="0" step="any" value="100"></div></label><label for="profit">이익 시 가격<div class="field"><input id="profit" aria-label="이익 시 가격" aria-describedby="profit-rate" type="number" min="0" step="any" value="120"><span id="profit-rate" class="price-rate profit-rate"></span></div></label><label for="loss">손실 시 가격<div class="field"><input id="loss" aria-label="손실 시 가격" aria-describedby="loss-rate" type="number" min="0" step="any" value="80"><span id="loss-rate" class="price-rate loss-rate"></span></div></label>';
   document.querySelector('.inspect').before(prices);
+  for(const id of ['current','profit','loss']){
+    const label=$(id).closest('label'),control=document.createElement('div');control.className='price-control';
+    label.before(control);control.append(label);
+    const slider=document.createElement('input');slider.type='range';slider.id=id+'-slider';slider.min=id==='loss'?'0':'0.5';slider.max='240';slider.step='0.5';slider.value=$(id).value;
+    slider.setAttribute('aria-label',({current:'현재가격',profit:'이익 시 가격',loss:'손실 시 가격'})[id]+' 슬라이더');control.append(slider);
+  }
+  const lock=document.createElement('label');lock.className='target-lock';lock.hidden=true;
+  lock.innerHTML='<input id="lock-target" type="checkbox">목표 투자비중 고정';document.querySelector('.inspect').append(lock);
+  function releaseLock(){lockedTarget=null;$('lock-target').checked=false;$('p').disabled=$('p-slider').disabled=false;}
+  $('lock-target').addEventListener('change',()=>{
+    if($('lock-target').checked){lockedTarget=Number($('f').value)/100;$('p').disabled=$('p-slider').disabled=true;}else releaseLock();
+    api.update(false);
+  });
+  api.changeTarget=f=>{if(lockedTarget!==null)lockedTarget=f;};
   const aside=document.createElement('aside');aside.className='saved-calculations';aside.hidden=true;
   aside.innerHTML='<h2>저장한 계산</h2><form id="save-calculation"><label for="calculation-title">제목</label><input id="calculation-title" maxlength="100" required placeholder="예: 엔비디아 목표가 검토"><button id="save-button" type="button">현재 계산 저장</button></form><p id="save-status" role="status"></p><div id="saved-list"></div>';
   document.querySelector('main').append(aside);
   const status=text=>{$('save-status').textContent=text;};
   function setMode(next){
-    inputMode=next;prices.hidden=next!=='prices';
+    releaseLock();inputMode=next;prices.hidden=lock.hidden=next!=='prices';
     for(const id of ['a','b'])$(id).closest('.input-control').hidden=next==='prices';
     $('invert').hidden=next==='prices';
     document.querySelector('.calculator>.inputs').classList.toggle('price-probability',next==='prices');
@@ -44,12 +64,22 @@ export function installFinance(api) {
   }
   api.beforeUpdate=()=>{
     if(inputMode!=='prices')return;
+    for(const id of ['current','profit','loss']){
+      const slider=$(id+'-slider'),value=Number($(id).value);
+      if(Number.isFinite(value)&&value>Number(slider.max))slider.max=String(Math.ceil(value*2));
+      slider.value=$(id).value;
+    }
     const rates=priceReturns($('current').value,$('profit').value,$('loss').value);
+    if(lockedTarget!==null)$('p').value=String(winProbabilityForPrices(lockedTarget,$('current').value,$('profit').value,$('loss').value)*100);
     $('a').value=String(rates.a*100);$('b').value=String(rates.b*100);
     $('profit-rate').textContent=`+${api.percent(rates.a)}`;$('loss-rate').textContent=`−${api.percent(rates.b)}`;
   };
   api.afterUpdate=valid=>{$('save-button').disabled=!valid; if(!valid){$('profit-rate').textContent='';$('loss-rate').textContent='';}};
-  for(const id of ['current','profit','loss'])$(id).addEventListener('input',()=>api.update());
+  api.targetFraction=()=>inputMode==='prices'?lockedTarget:null;
+  for(const id of ['current','profit','loss']){
+    $(id).addEventListener('input',()=>api.update());
+    $(id+'-slider').addEventListener('input',()=>{$(id).value=$(id+'-slider').value;api.update();});
+  }
   for(const mode of ['rates','prices'])$(mode+'-mode').addEventListener('click',()=>setMode(mode));
   function render(){
     const list=$('saved-list');list.replaceChildren();

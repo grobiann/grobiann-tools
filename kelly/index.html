@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#117453"><meta name="description" content="승률과 수익·손실률로 계산하는 켈리 최적 투자비중. 산술적 기댓값과 기하 성장률을 비교하고 일반식의 증명을 확인한다."><title>켈리 계산기 · grobiann tools</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=20261126-3"></head>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#117453"><meta name="description" content="승률과 수익·손실률로 계산하는 켈리 최적 투자비중. 산술적 기댓값과 기하 성장률을 비교하고 일반식의 증명을 확인한다."><title>켈리 계산기 · grobiann tools</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=20261126-4"></head>
 <body><main><header><a class="brand" href="../">grobiann <span>/ tools</span></a><h1 class="page-title">켈리 계산기</h1></header>
 <section class="calculator" aria-label="켈리 계산기"><div class="inputs">
 <div class="input-control"><div class="probability-row"><label for="p">승률</label><button id="invert" type="button" title="승률을 100%−승률로 바꾸고 수익률과 손실률을 교환">반전</button><div class="field"><input id="p" type="number" inputmode="decimal" min="0" max="100" step="any" value="60"><span>%</span></div></div><input class="parameter-slider" id="p-slider" aria-label="승률 슬라이더" type="range" min="0" max="100" step="5" value="60"></div>
@@ -41,4 +41,4 @@
 <p class="assumptions">a &gt; 0, b &gt; 0이며 수식에는 20%를 0.2로 넣는다. G″(f) = −pa²/(1 + af)² − qb²/(1 − bf)² &lt; 0이므로 내부 정지점이 최대다. 그래프의 기하 성장률은 exp(G(f)) − 1이다. 공매도는 제외하며 음수 최적값은 0%로 표시한다. p = 1이면 이 모형에서 유한한 최적 비중은 없다. 비용·세금·차입금리·현금 수익률은 제외한다.</p>
 <a class="source" href="https://blog.naver.com/grobiann/224492192287" target="_blank" rel="noopener noreferrer">원문 · 켈리의 공식이란? 투자비중 계산, 복리와 수학적 증명</a>
 </section>
-<footer>grobiann tools </footer></main><script type="module" src="app.mjs?v=20261126-3"></script></body></html>
+<footer>grobiann tools </footer></main><script type="module" src="app.mjs?v=20261126-4"></script></body></html>
