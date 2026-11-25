@@ -1,4 +1,4 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-3';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-4';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';
@@ -14,12 +14,9 @@ function update(reset=true) {
     model=calculateKelly(...fields.map(id=>Number($(id).value)/100));
     $('error').hidden=true;$('results').hidden=false;
     $('edge').textContent=percent(model.edge);$('kelly').textContent=Number.isFinite(model.kelly)?percent(model.kelly):'상한 없음';
-    $('boundary').hidden=model.rawKelly>=0 && model.p<1;
-    $('boundary').textContent=model.p===1?'승률 100%에서는 차입비용이 없는 이 모형의 성장률이 계속 증가하므로 유한한 최적 비중이 없다. 그래프는 1/b까지만 표시한다.':`공식의 계산값은 ${percent(model.rawKelly)}다. 공매도를 제외하므로 투자비중은 0%로 표시한다.`;
     $('f').max=model.maxFraction*100;
     if(reset) $('f').value=Math.min(model.kelly,model.maxFraction)*100;
     for(const id of fields){const slider=$(id+'-slider');if(id==='a')slider.max=Math.max(200,Number($(id).value));slider.value=$(id).value;}
-    $('domain-note').textContent=`그래프 범위: 0~${percent(model.maxFraction)}. 손실률 ${percent(model.b)}에서 투자비중 ${percent(model.maxFraction)}는 한 번 패배하면 전체 자산을 잃는 경계다. 차입금리·비용은 제외한다.`;
     try {localStorage.setItem('kelly-inputs-v2',JSON.stringify(Object.fromEntries(fields.map(id=>[id,$(id).value]))));} catch {}
     draw();
   } catch(error) {$('error').textContent=error.message;$('error').hidden=false;$('results').hidden=true;model=null;}
@@ -28,10 +25,9 @@ function draw(){
   if(!model)return;
   const f=Number($('f').value)/100, fn=model[mode];
   $('f-value').textContent=percent(f);
-  $('point').textContent=model.p===1?'필요 승률 100%. 이 끝점에서는 유한한 켈리 최적값이 없다.':model.kelly===0?`현재 승률 ${percent(model.p)}. 0% 비중의 경계 승률은 ${percent(requiredWinProbability(0,model.a,model.b))}다.`:`필요 승률 ${percent(model.p)} · 드래그하면 위의 승률과 그래프가 함께 바뀐다.`;
+  $('point').textContent=`승률 ${percent(model.p)}`;
   const geo=mode==='geometric';
   $('chart-title').textContent=`투자비중에 따른 ${geo?'기하 성장률':'산술적 기댓값'}`;
-  $('chart-note').textContent=geo?'기하 성장률 = exp(g(f)) − 1. 곡선의 최댓값이 켈리 최적 비중이다.':'산술적 기댓값 = f × (pa − qb). 직선 위의 파란 표시는 로그 성장률을 최대로 만드는 켈리 비중이다.';
   const limit=model.maxFraction;
   const optimum=Math.min(model.kelly,limit);
   const points=Array.from({length:401},(_,i)=>({f:i/400*limit,y:fn(i/400*limit)}));
@@ -58,10 +54,4 @@ for(const id of fields)$(id+'-slider').addEventListener('input',()=>{$(id).value
 $('f').addEventListener('input',()=>{if(!model)return;const f=Math.min(Number($('f').value)/100,model.maxFraction);$('p').value=Number((requiredWinProbability(f,model.a,model.b)*100).toFixed(6));update(false);});
 for(const id of ['arithmetic','geometric']) $(id).addEventListener('click',()=>{mode=id;for(const tab of ['arithmetic','geometric'])$(tab).setAttribute('aria-pressed',String(tab===id));draw();});
 window.addEventListener('resize',draw);
-$('share').addEventListener('click',async()=>{
-  if(!model){$('status').textContent='입력값을 먼저 확인해라.';setTimeout(()=>$('status').textContent='',3000);return;}
-  const url=new URL(location.href);url.search=new URLSearchParams(Object.fromEntries(fields.map(id=>[id,$(id).value]))).toString();
-  try{await navigator.clipboard.writeText(url.href);$('status').textContent='현재 조건의 링크를 복사했다.';}catch{prompt('아래 링크를 복사해라.',url.href);}
-  setTimeout(()=>$('status').textContent='',3000);
-});
 update();
