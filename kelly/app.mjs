@@ -1,4 +1,4 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-5';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-6';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';
@@ -14,18 +14,19 @@ function update(reset=true) {
     model=calculateKelly(...fields.map(id=>Number($(id).value)/100));
     $('error').hidden=true;$('results').hidden=false;
     $('edge').textContent=percent(model.edge);$('kelly').textContent=Number.isFinite(model.kelly)?percent(model.kelly):'상한 없음';
-    $('f').max=model.maxFraction*100;
-    if(reset) $('f').value=Math.min(model.kelly,model.maxFraction)*100;
+    $('f').max=Math.min(150,Math.floor(model.maxFraction*100/5)*5);$('f').disabled=false;
+    document.querySelector('.metrics').style.setProperty('--expectation-color',model.edge<0?'#c23838':model.edge>0?'#12804f':'#536d5f');
+    if(reset) $('f').value=Math.min(model.kelly*100,Number($('f').max));
     for(const id of fields){const slider=$(id+'-slider');if(id==='a')slider.max=Math.max(200,Number($(id).value));slider.value=$(id).value;}
     try {localStorage.setItem('kelly-inputs-v2',JSON.stringify(Object.fromEntries(fields.map(id=>[id,$(id).value]))));} catch {}
     draw();
-  } catch(error) {$('error').textContent=error.message;$('error').hidden=false;$('results').hidden=true;model=null;}
+  } catch(error) {$('error').textContent=error.message;$('error').hidden=false;$('results').hidden=true;$('f').disabled=true;model=null;}
 }
 function draw(){
   if(!model)return;
   const f=Number($('f').value)/100, fn=model[mode];
   $('f-value').textContent=percent(f);
-  $('point').textContent=`승률 ${percent(model.p)}`;
+
   const geo=mode==='geometric';
   $('chart-title').textContent=`투자비중에 따른 ${geo?'기하 성장률':'산술적 기댓값'}`;
   const limit=model.maxFraction;
@@ -38,7 +39,7 @@ function draw(){
   const tick=[1,2,2.5,5,10].map(v=>v*base).find(v=>v>=rough);
   const min=Math.floor(low/tick)*tick,max=Math.max(min+tick,Math.ceil(high/tick)*tick);
   const mobile=matchMedia('(max-width:650px)').matches;
-  const W=mobile?390:800,H=mobile?Math.max(150,Math.min(240,window.innerHeight-470)):350,L=mobile?56:76,R=22,T=12,B=30;
+  const W=mobile?390:800,H=mobile?260:350,L=mobile?56:76,R=22,T=12,B=30;
   const x=f=>L+f/limit*(W-L-R), y=v=>T+(max-v)/(max-min)*(H-T-B);
   let out=`<desc id="chart-desc">투자비중 0~${percent(limit)}에 따른 ${geo?'기하 성장률':'산술적 기댓값'}. 켈리 최적 비중 ${$('kelly').textContent}.</desc>`;
   for(let t=min;t<=max+tick/10;t+=tick) {out+=`<line x1="${L}" y1="${y(t)}" x2="${W-R}" y2="${y(t)}" stroke="#e5ece7"/><text x="${L-10}" y="${y(t)+5}" text-anchor="end" fill="#6b7e71" font-size="13">${percent(t)}</text>`;}
@@ -56,7 +57,7 @@ for(const id of fields){
   input.addEventListener('blur',()=>{if(input.value.trim()==='')input.value=previous;update();});
 }
 for(const id of fields)$(id+'-slider').addEventListener('input',()=>{$(id).value=$(id+'-slider').value;update();});
-$('f').addEventListener('input',()=>{if(!model)return;const max=model.maxFraction*100,step=max>=100?5:1,raw=Number($('f').value);const snapped=raw>=max-step/2?max:Math.round(raw/step)*step;$('f').value=snapped;const f=Math.min(snapped/100,model.maxFraction);$('p').value=Number((requiredWinProbability(f,model.a,model.b)*100).toFixed(6));update(false);});
+$('f').addEventListener('input',()=>{if(!model)return;const max=Number($('f').max),step=5,raw=Number($('f').value);const snapped=raw>=max-step/2?max:Math.round(raw/step)*step;$('f').value=snapped;const f=Math.min(snapped/100,model.maxFraction);$('p').value=Number((requiredWinProbability(f,model.a,model.b)*100).toFixed(6));update(false);});
 for(const id of ['arithmetic','geometric']) $(id).addEventListener('click',()=>{mode=id;for(const tab of ['arithmetic','geometric'])$(tab).setAttribute('aria-pressed',String(tab===id));draw();});
 window.addEventListener('resize',draw);
 update();

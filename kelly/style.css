@@ -24,3 +24,25 @@ input[type=range]{height:44px;margin:0}.metrics{padding:8px 0;margin-bottom:8px;
 
 @media(max-width:650px){.chart svg{height:clamp(100px,calc(100svh - 535px),190px)}.inspect input{margin-bottom:0}.inspect p{bottom:0;font-size:10px}}
 @media(max-width:650px) and (max-height:650px){.chart svg{height:100px}}
+
+/* Shared semantic colors and roomier controls. */
+.input-control:has(#a){--control-color:#12804f;--control-track:#d8eee2;--control-border:#b9dfc9;--control-fill:#f5fbf7}
+.input-control:has(#b){--control-color:#c23838;--control-track:#f3dcdc;--control-border:#e9bebe;--control-fill:#fff8f8}
+.input-control:has(#a) .field,.input-control:has(#b) .field{border-color:var(--control-border);background:var(--control-fill)}
+.input-control:has(#a) .field input,.input-control:has(#b) .field input,.input-control:has(#a) .field span,.input-control:has(#b) .field span{color:var(--control-color)}
+.input-control .field:focus-within{outline-color:var(--control-color,#16805b)}
+.input-control .parameter-slider::-webkit-slider-runnable-track{background:var(--control-track,#d6e5dc)}
+.input-control .parameter-slider::-webkit-slider-thumb{background:var(--control-color,#16805b)}
+.input-control .parameter-slider::-moz-range-track{background:var(--control-track,#d6e5dc)}
+.input-control .parameter-slider::-moz-range-thumb,.input-control .parameter-slider::-moz-range-progress{background:var(--control-color,#16805b)}
+.metrics>div:first-child p,.metrics>div:first-child p span,#edge{color:var(--expectation-color,#12804f)}
+.primary p,#kelly,.inspect label,.inspect output{color:#2867c5}
+.inspect{background:#f1f6ff;margin:12px 0 22px;padding:16px 18px}.inspect label{font-size:17px;font-weight:650}.inspect output{font-size:21px}
+.inspect input[type=range]{height:48px;margin:6px 0 0}.inspect input::-webkit-slider-runnable-track{background:#d7e5fb}.inspect input::-webkit-slider-thumb{background:#3979d9}.inspect input::-moz-range-track{background:#d7e5fb}.inspect input::-moz-range-thumb,.inspect input::-moz-range-progress{background:#3979d9}
+@media(max-width:650px){
+main{padding:18px 14px 0}header{padding-bottom:16px}.brand,.page-title{font-size:17px}.calculator{padding:20px 16px;border-radius:16px}
+.inputs{gap:14px;margin-bottom:4px}.input-control label{font-size:19px;min-height:38px}.input-control .field{width:108px;padding:0 10px}.input-control .field input{height:36px;font-size:23px;padding:5px 0}.input-control input[type=range]{height:48px;margin:4px 0}
+.inspect{margin:14px 0 20px;padding:14px 14px 10px}.inspect label{font-size:17px;line-height:24px}.inspect input[type=range]{height:48px;margin:6px 0 0}
+.metrics{padding:16px 0;margin-bottom:14px;gap:14px}.metrics p{font-size:13px;line-height:1.5;min-height:38px;margin-bottom:5px}.metrics p span{font-size:11px}.metrics strong{font-size:30px}.primary{padding-left:14px}
+.tabs{margin-bottom:8px;padding:3px}.tabs button{font-size:13px;padding:8px 12px}.chart svg{height:auto;min-height:205px}.legend{font-size:11px;gap:10px;margin:8px 0 0;flex-wrap:wrap}.legend .axis{font-size:11px}.proof{padding-top:32px}
+}
