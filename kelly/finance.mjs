@@ -1,4 +1,4 @@
-import {calculateKelly} from './kelly.mjs?v=20261126-2';
+import {calculateKelly} from './kelly.mjs?v=20261126-3';
 
 export function priceReturns(current, profit, loss) {
   const values=[current,profit,loss];
@@ -28,7 +28,7 @@ export function installFinance(api) {
   bar.innerHTML='<div class="tabs" role="group" aria-label="입력 방식"><button id="rates-mode" aria-pressed="true">수익률 입력</button><button id="prices-mode" aria-pressed="false">가격 입력</button></div>';
   document.querySelector('.calculator').prepend(bar);
   const prices=document.createElement('div');prices.className='inputs price-inputs';prices.hidden=true;
-  prices.innerHTML='<label>현재가격<div class="field"><input id="current" type="number" min="0" step="any" value="100"></div></label><label>이익 시 가격<div class="field"><input id="profit" type="number" min="0" step="any" value="120"></div></label><label>손실 시 가격<div class="field"><input id="loss" type="number" min="0" step="any" value="80"></div></label><p id="price-rates"></p>';
+  prices.innerHTML='<label for="current">현재가격<div class="field"><input id="current" type="number" min="0" step="any" value="100"></div></label><label for="profit">이익 시 가격<div class="field"><input id="profit" aria-label="이익 시 가격" aria-describedby="profit-rate" type="number" min="0" step="any" value="120"><span id="profit-rate" class="price-rate profit-rate"></span></div></label><label for="loss">손실 시 가격<div class="field"><input id="loss" aria-label="손실 시 가격" aria-describedby="loss-rate" type="number" min="0" step="any" value="80"><span id="loss-rate" class="price-rate loss-rate"></span></div></label>';
   document.querySelector('.inspect').before(prices);
   const aside=document.createElement('aside');aside.className='saved-calculations';aside.hidden=true;
   aside.innerHTML='<h2>저장한 계산</h2><form id="save-calculation"><label for="calculation-title">제목</label><input id="calculation-title" maxlength="100" required placeholder="예: 엔비디아 목표가 검토"><button id="save-button" type="button">현재 계산 저장</button></form><p id="save-status" role="status"></p><div id="saved-list"></div>';
@@ -46,9 +46,9 @@ export function installFinance(api) {
     if(inputMode!=='prices')return;
     const rates=priceReturns($('current').value,$('profit').value,$('loss').value);
     $('a').value=String(rates.a*100);$('b').value=String(rates.b*100);
-    $('price-rates').textContent=`승리 시 +${api.percent(rates.a)} · 패배 시 −${api.percent(rates.b)}`;
+    $('profit-rate').textContent=`+${api.percent(rates.a)}`;$('loss-rate').textContent=`−${api.percent(rates.b)}`;
   };
-  api.afterUpdate=valid=>{$('save-button').disabled=!valid; if(!valid)$('price-rates').textContent='';};
+  api.afterUpdate=valid=>{$('save-button').disabled=!valid; if(!valid){$('profit-rate').textContent='';$('loss-rate').textContent='';}};
   for(const id of ['current','profit','loss'])$(id).addEventListener('input',()=>api.update());
   for(const mode of ['rates','prices'])$(mode+'-mode').addEventListener('click',()=>setMode(mode));
   function render(){
