@@ -1,4 +1,4 @@
-import {calculateKelly} from './kelly.mjs?v=20261126-1';
+import {calculateKelly} from './kelly.mjs?v=20261126-2';
 
 export function priceReturns(current, profit, loss) {
   const values=[current,profit,loss];
@@ -31,7 +31,7 @@ export function installFinance(api) {
   prices.innerHTML='<label>현재가격<div class="field"><input id="current" type="number" min="0" step="any" value="100"></div></label><label>이익 시 가격<div class="field"><input id="profit" type="number" min="0" step="any" value="120"></div></label><label>손실 시 가격<div class="field"><input id="loss" type="number" min="0" step="any" value="80"></div></label><p id="price-rates"></p>';
   document.querySelector('.inspect').before(prices);
   const aside=document.createElement('aside');aside.className='saved-calculations';aside.hidden=true;
-  aside.innerHTML='<h2>저장한 계산</h2><form id="save-calculation"><label for="calculation-title">제목</label><input id="calculation-title" maxlength="100" required placeholder="예: 엔비디아 목표가 검토"><button id="save-button">현재 계산 저장</button></form><p id="save-status" role="status"></p><div id="saved-list"></div>';
+  aside.innerHTML='<h2>저장한 계산</h2><form id="save-calculation"><label for="calculation-title">제목</label><input id="calculation-title" maxlength="100" required placeholder="예: 엔비디아 목표가 검토"><button id="save-button" type="button">현재 계산 저장</button></form><p id="save-status" role="status"></p><div id="saved-list"></div>';
   document.querySelector('main').append(aside);
   const status=text=>{$('save-status').textContent=text;};
   function setMode(next){
@@ -66,7 +66,8 @@ export function installFinance(api) {
       });list.append(button);
     }
   }
-  $('save-calculation').addEventListener('submit',event=>{
+  $('calculation-title').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();$('save-button').click();}});
+  $('save-button').addEventListener('click',event=>{
     event.preventDefault();if(!parentOrigin)return;
     try{
       const title=$('calculation-title').value.trim();if(!title)throw Error('제목을 입력하세요.');
