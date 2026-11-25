@@ -46,3 +46,5 @@ main{padding:18px 14px 0}header{padding-bottom:16px}.brand,.page-title{font-size
 .metrics{padding:16px 0;margin-bottom:14px;gap:14px}.metrics p{font-size:13px;line-height:1.5;min-height:38px;margin-bottom:5px}.metrics p span{font-size:11px}.metrics strong{font-size:30px}.primary{padding-left:14px}
 .tabs{margin-bottom:8px;padding:3px}.tabs button{font-size:13px;padding:8px 12px}.chart svg{height:auto;min-height:205px}.legend{font-size:11px;gap:10px;margin:8px 0 0;flex-wrap:wrap}.legend .axis{font-size:11px}.proof{padding-top:32px}
 }
+
+.input-actions{display:flex;justify-content:flex-end;margin:-6px 0 12px}.input-actions button{font-size:13px;line-height:20px;padding:6px 12px;border:1px solid #d4e0da;border-radius:7px;background:#f6f9f7;color:#466354}.input-actions button:hover{background:#e9f1ec}.input-actions button:disabled{opacity:.45;cursor:default}

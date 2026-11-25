@@ -1,6 +1,6 @@
 /** Pure calculation API. All arguments are decimal ratios, not percentages. */
 export function calculateKelly(p, a, b) {
-  if (![p,a,b].every(Number.isFinite) || p < 0 || p > 1 || a <= 0 || b <= 0 || b > 1) throw new RangeError('승률 0~100%, 수익률 > 0%, 손실률 > 0~100%를 입력해라.');
+  if (![p,a,b].every(Number.isFinite) || p < 0 || p > 1 || a <= 0 || b <= 0) throw new RangeError('승률 0~100%, 수익률과 손실률은 0%보다 큰 값을 입력해라.');
   const q = 1-p;
   const rawKelly = p/b-q/a;
   const maxFraction = 1/b;

@@ -1,4 +1,4 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-7';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-8';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';
@@ -14,13 +14,13 @@ function update(reset=true) {
     model=calculateKelly(...fields.map(id=>Number($(id).value)/100));
     $('error').hidden=true;$('results').hidden=false;
     $('edge').textContent=percent(model.edge);$('kelly').textContent=Number.isFinite(model.kelly)?percent(model.kelly):'상한 없음';
-    $('f').max=Math.min(150,Math.floor(model.maxFraction*100/5)*5);$('f').disabled=false;
+    $('f').max=Math.min(150,Math.floor(model.maxFraction*100/5)*5);$('f').disabled=false;$('invert').disabled=false;
     document.querySelector('.metrics').style.setProperty('--expectation-color',model.edge<0?'#c23838':model.edge>0?'#12804f':'#536d5f');
     if(reset) $('f').value=Math.min(model.kelly*100,Number($('f').max));
     for(const id of fields){const slider=$(id+'-slider');slider.value=$(id).value;}
     try {localStorage.setItem('kelly-inputs-v2',JSON.stringify(Object.fromEntries(fields.map(id=>[id,$(id).value]))));} catch {}
     draw();
-  } catch(error) {$('error').textContent=error.message;$('error').hidden=false;$('results').hidden=true;$('f').disabled=true;model=null;}
+  } catch(error) {$('error').textContent=error.message;$('error').hidden=false;$('results').hidden=true;$('f').disabled=true;$('invert').disabled=true;model=null;}
 }
 function draw(){
   if(!model)return;
@@ -59,5 +59,11 @@ for(const id of fields){
 for(const id of fields)$(id+'-slider').addEventListener('input',()=>{$(id).value=$(id+'-slider').value;update();});
 $('f').addEventListener('input',()=>{if(!model)return;const max=Number($('f').max),step=5,raw=Number($('f').value);const snapped=raw>=max-step/2?max:Math.round(raw/step)*step;$('f').value=snapped;const f=Math.min(snapped/100,model.maxFraction);$('p').value=Number((requiredWinProbability(f,model.a,model.b)*100).toFixed(6));update(false);});
 for(const id of ['arithmetic','geometric']) $(id).addEventListener('click',()=>{mode=id;for(const tab of ['arithmetic','geometric'])$(tab).setAttribute('aria-pressed',String(tab===id));draw();});
+$('invert').addEventListener('click',()=>{
+  if(!model)return;
+  const a=$('a').value,b=$('b').value;
+  $('p').value=Number((100-Number($('p').value)).toFixed(10));
+  $('a').value=b;$('b').value=a;update();
+});
 window.addEventListener('resize',draw);
 update();
