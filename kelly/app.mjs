@@ -1,5 +1,5 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-6';
-import {installFinance} from './finance.mjs?v=20261126-6';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-7';
+import {installFinance} from './finance.mjs?v=20261126-7';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';
@@ -7,7 +7,7 @@ const finance={update,percent:v=>percent(v),chartMode:()=>mode,setChartMode:valu
 const percent = v => new Intl.NumberFormat('ko-KR',{maximumFractionDigits:1,minimumFractionDigits:1}).format(Math.abs(v)<1e-12?0:v*100)+'%';
 try {
   const query=new URLSearchParams(location.search);
-  const saved=JSON.parse(localStorage.getItem('kelly-inputs-v2')||'null');
+  const saved=query.get('mode')==='finance'?null:JSON.parse(localStorage.getItem('kelly-inputs-v2')||'null');
   for(const key of fields) if(query.has(key)) $(key).value=query.get(key); else if(saved?.[key]!=null) $(key).value=saved[key];
 } catch {}
 function update(reset=true) {
@@ -22,8 +22,8 @@ function update(reset=true) {
     const fixedTarget=finance.targetFraction?.();
     if(fixedTarget!=null){$('f').max=Math.max(Number($('f').max),fixedTarget*100);$('f').value=fixedTarget*100;}
     else if(reset) $('f').value=Math.min(model.kelly*100,Number($('f').max));
-    for(const id of fields){const slider=$(id+'-slider');slider.value=$(id).value;}
-    try {localStorage.setItem('kelly-inputs-v2',JSON.stringify(Object.fromEntries(fields.map(id=>[id,$(id).value]))));} catch {}
+    for(const id of fields){if(document.activeElement!==$(id))$(id).value=String(Number(Number($(id).value).toFixed(1)));const slider=$(id+'-slider');slider.value=$(id).value;}
+    try {if(new URLSearchParams(location.search).get('mode')!=='finance')localStorage.setItem('kelly-inputs-v2',JSON.stringify(Object.fromEntries(fields.map(id=>[id,$(id).value]))));} catch {}
     draw();finance.afterUpdate?.(true);
   } catch(error) {$('error').textContent=error.message;$('error').hidden=false;$('results').hidden=true;$('f').disabled=true;$('invert').disabled=true;model=null;finance.afterUpdate?.(false);}
 }

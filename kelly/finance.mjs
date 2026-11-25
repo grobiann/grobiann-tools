@@ -1,4 +1,4 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-6';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-7';
 
 export function winProbabilityForPrices(target,current,profit,loss){
   const {a,b}=priceReturns(current,profit,loss);
@@ -98,7 +98,7 @@ export function installFinance(api) {
       const button=document.createElement('button');button.className='saved-item';
       const title=document.createElement('strong');title.textContent=record.title;
       const detail=document.createElement('span');
-      try{const {model}=validateSnapshot(record.snapshot);detail.textContent=`켈리 ${Number.isFinite(model.kelly)?api.percent(model.kelly):'상한 없음'} · 승률 ${record.snapshot.p}%`;}catch{detail.textContent='불러올 수 없는 계산';button.disabled=true;}
+      try{const {model}=validateSnapshot(record.snapshot);detail.textContent=`켈리 ${Number.isFinite(model.kelly)?api.percent(model.kelly):'상한 없음'} · 승률 ${api.percent(Number(record.snapshot.p)/100)}`;}catch{detail.textContent='불러올 수 없는 계산';button.disabled=true;}
       const date=document.createElement('time');date.textContent=new Date(record.createdAt).toLocaleString('ko-KR');
       button.append(title,detail,date);
       button.addEventListener('click',()=>{
