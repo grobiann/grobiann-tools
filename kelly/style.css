@@ -48,3 +48,7 @@ main{padding:18px 14px 0}header{padding-bottom:16px}.brand,.page-title{font-size
 }
 
 .input-actions{display:flex;justify-content:flex-end;margin:-6px 0 12px}.input-actions button{font-size:13px;line-height:20px;padding:6px 12px;border:1px solid #d4e0da;border-radius:7px;background:#f6f9f7;color:#466354}.input-actions button:hover{background:#e9f1ec}.input-actions button:disabled{opacity:.45;cursor:default}
+
+.probability-row{display:flex;flex-wrap:wrap;align-items:center;gap:0 10px}.probability-row label{margin:0}.probability-row .field{flex-basis:100%}
+#invert{font-size:12px;line-height:18px;padding:4px 9px;border:1px solid #d4e0da;border-radius:6px;background:#f6f9f7;color:#466354}#invert:hover{background:#e9f1ec}#invert:disabled{opacity:.45;cursor:default}
+@media(max-width:650px){.probability-row{flex-wrap:nowrap;min-height:38px}.probability-row .field{flex-basis:auto;flex-shrink:0;margin-left:auto}.probability-row label{min-height:0}}
