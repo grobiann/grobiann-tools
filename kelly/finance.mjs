@@ -1,4 +1,4 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-4';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-5';
 
 export function winProbabilityForPrices(target,current,profit,loss){
   const {a,b}=priceReturns(current,profit,loss);
@@ -29,7 +29,7 @@ export function validateSnapshot(value) {
 export function installFinance(api) {
   if(new URLSearchParams(location.search).get('mode')!=='finance'||window.parent===window)return;
   const $=id=>document.getElementById(id);
-  let parentOrigin=null,inputMode='rates',records=[],lockedTarget=null;
+  let parentOrigin=null,inputMode='rates',records=[],lockedTarget=null,exactProbability=null,lockedPrices=null;
   const bar=document.createElement('div');bar.className='finance-toolbar';bar.hidden=true;
   bar.innerHTML='<div class="tabs" role="group" aria-label="입력 방식"><button id="rates-mode" aria-pressed="true">수익률 입력</button><button id="prices-mode" aria-pressed="false">가격 입력</button></div>';
   document.querySelector('.calculator').prepend(bar);
@@ -44,12 +44,12 @@ export function installFinance(api) {
   }
   const lock=document.createElement('label');lock.className='target-lock';lock.hidden=true;
   lock.innerHTML='<input id="lock-target" type="checkbox">목표 투자비중 고정';document.querySelector('.inspect').append(lock);
-  function releaseLock(){lockedTarget=null;$('lock-target').checked=false;$('p').disabled=$('p-slider').disabled=false;}
+  function releaseLock(){lockedTarget=null;lockedPrices=null;exactProbability=null;$('lock-target').checked=false;$('p').disabled=$('p-slider').disabled=false;}
   $('lock-target').addEventListener('change',()=>{
-    if($('lock-target').checked){lockedTarget=Number($('f').value)/100;$('p').disabled=$('p-slider').disabled=true;}else releaseLock();
+    if($('lock-target').checked){lockedTarget=Number($('f').value)/100;exactProbability=Number($('p').value)/100;lockedPrices=['current','profit','loss'].map(id=>$(id).value).join('|');$('p').disabled=$('p-slider').disabled=true;}else releaseLock();
     api.update(false);
   });
-  api.changeTarget=f=>{if(lockedTarget!==null)lockedTarget=f;};
+  api.changeTarget=f=>{if(lockedTarget!==null){lockedTarget=f;lockedPrices=null;}};
   const aside=document.createElement('aside');aside.className='saved-calculations';aside.hidden=true;
   aside.innerHTML='<h2>저장한 계산</h2><form id="save-calculation"><label for="calculation-title">제목</label><input id="calculation-title" maxlength="100" required placeholder="예: 엔비디아 목표가 검토"><button id="save-button" type="button">현재 계산 저장</button></form><p id="save-status" role="status"></p><div id="saved-list"></div>';
   document.querySelector('main').append(aside);
@@ -70,11 +70,16 @@ export function installFinance(api) {
       slider.value=$(id).value;
     }
     const rates=priceReturns($('current').value,$('profit').value,$('loss').value);
-    if(lockedTarget!==null)$('p').value=String(winProbabilityForPrices(lockedTarget,$('current').value,$('profit').value,$('loss').value)*100);
+    if(lockedTarget!==null){
+      const key=['current','profit','loss'].map(id=>$(id).value).join('|');
+      if(key!==lockedPrices){exactProbability=winProbabilityForPrices(lockedTarget,$('current').value,$('profit').value,$('loss').value);lockedPrices=key;}
+      $('p').value=String(Number((exactProbability*100).toFixed(1)));
+    }
     $('a').value=String(rates.a*100);$('b').value=String(rates.b*100);
     $('profit-rate').textContent=`+${api.percent(rates.a)}`;$('loss-rate').textContent=`−${api.percent(rates.b)}`;
   };
   api.afterUpdate=valid=>{$('save-button').disabled=!valid; if(!valid){$('profit-rate').textContent='';$('loss-rate').textContent='';}};
+  api.probability=()=>lockedTarget!==null?exactProbability:null;
   api.targetFraction=()=>inputMode==='prices'?lockedTarget:null;
   for(const id of ['current','profit','loss']){
     $(id).addEventListener('input',()=>api.update());
@@ -102,6 +107,7 @@ export function installFinance(api) {
     try{
       const title=$('calculation-title').value.trim();if(!title)throw Error('제목을 입력하세요.');
       api.update();const raw={inputMode,chartMode:api.chartMode(),...Object.fromEntries(['p','a','b','current','profit','loss'].map(k=>[k,$(k).value]))};
+      if(lockedTarget!==null)raw.p=String(exactProbability*100);
       const {snapshot,model}=validateSnapshot(raw);
       window.parent.postMessage({type:'kelly:save',version:1,title,snapshot,result:{kelly:Number.isFinite(model.kelly)?model.kelly:null,edge:model.edge}},parentOrigin);
       status('저장 중…');

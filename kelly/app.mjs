@@ -1,10 +1,10 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-4';
-import {installFinance} from './finance.mjs?v=20261126-4';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-5';
+import {installFinance} from './finance.mjs?v=20261126-5';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';
 const finance={update,percent:v=>percent(v),chartMode:()=>mode,setChartMode:value=>{mode=value;for(const id of ['arithmetic','geometric'])$(id).setAttribute('aria-pressed',String(id===value));}};
-const percent = v => new Intl.NumberFormat('ko-KR',{maximumFractionDigits:2,minimumFractionDigits:1}).format(Math.abs(v)<1e-12?0:v*100)+'%';
+const percent = v => new Intl.NumberFormat('ko-KR',{maximumFractionDigits:1,minimumFractionDigits:1}).format(Math.abs(v)<1e-12?0:v*100)+'%';
 try {
   const query=new URLSearchParams(location.search);
   const saved=JSON.parse(localStorage.getItem('kelly-inputs-v2')||'null');
@@ -14,7 +14,7 @@ function update(reset=true) {
   try {
     finance.beforeUpdate?.();
     if(fields.some(id=>$(id).value.trim()==='')) throw Error('세 가지 값을 모두 입력해라.');
-    model=calculateKelly(...fields.map(id=>Number($(id).value)/100));
+    model=calculateKelly(finance.probability?.()??Number($('p').value)/100,Number($('a').value)/100,Number($('b').value)/100);
     $('error').hidden=true;$('results').hidden=false;
     $('edge').textContent=percent(model.edge);$('kelly').textContent=Number.isFinite(model.kelly)?percent(model.kelly):'상한 없음';
     $('f').max=Math.min(150,Math.floor(model.maxFraction*100/5)*5);$('f').disabled=false;$('invert').disabled=false;
