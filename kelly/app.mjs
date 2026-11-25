@@ -1,7 +1,9 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-9';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-1';
+import {installFinance} from './finance.mjs?v=20261126-1';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';
+const finance={update,percent:v=>percent(v),chartMode:()=>mode,setChartMode:value=>{mode=value;for(const id of ['arithmetic','geometric'])$(id).setAttribute('aria-pressed',String(id===value));}};
 const percent = v => new Intl.NumberFormat('ko-KR',{maximumFractionDigits:2,minimumFractionDigits:1}).format(Math.abs(v)<1e-12?0:v*100)+'%';
 try {
   const query=new URLSearchParams(location.search);
@@ -10,6 +12,7 @@ try {
 } catch {}
 function update(reset=true) {
   try {
+    finance.beforeUpdate?.();
     if(fields.some(id=>$(id).value.trim()==='')) throw Error('세 가지 값을 모두 입력해라.');
     model=calculateKelly(...fields.map(id=>Number($(id).value)/100));
     $('error').hidden=true;$('results').hidden=false;
@@ -19,8 +22,8 @@ function update(reset=true) {
     if(reset) $('f').value=Math.min(model.kelly*100,Number($('f').max));
     for(const id of fields){const slider=$(id+'-slider');slider.value=$(id).value;}
     try {localStorage.setItem('kelly-inputs-v2',JSON.stringify(Object.fromEntries(fields.map(id=>[id,$(id).value]))));} catch {}
-    draw();
-  } catch(error) {$('error').textContent=error.message;$('error').hidden=false;$('results').hidden=true;$('f').disabled=true;$('invert').disabled=true;model=null;}
+    draw();finance.afterUpdate?.(true);
+  } catch(error) {$('error').textContent=error.message;$('error').hidden=false;$('results').hidden=true;$('f').disabled=true;$('invert').disabled=true;model=null;finance.afterUpdate?.(false);}
 }
 function draw(){
   if(!model)return;
@@ -66,4 +69,5 @@ $('invert').addEventListener('click',()=>{
   $('a').value=b;$('b').value=a;update();
 });
 window.addEventListener('resize',draw);
+installFinance(finance);
 update();
