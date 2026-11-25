@@ -1,4 +1,4 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-6';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-7';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';
@@ -17,7 +17,7 @@ function update(reset=true) {
     $('f').max=Math.min(150,Math.floor(model.maxFraction*100/5)*5);$('f').disabled=false;
     document.querySelector('.metrics').style.setProperty('--expectation-color',model.edge<0?'#c23838':model.edge>0?'#12804f':'#536d5f');
     if(reset) $('f').value=Math.min(model.kelly*100,Number($('f').max));
-    for(const id of fields){const slider=$(id+'-slider');if(id==='a')slider.max=Math.max(200,Number($(id).value));slider.value=$(id).value;}
+    for(const id of fields){const slider=$(id+'-slider');slider.value=$(id).value;}
     try {localStorage.setItem('kelly-inputs-v2',JSON.stringify(Object.fromEntries(fields.map(id=>[id,$(id).value]))));} catch {}
     draw();
   } catch(error) {$('error').textContent=error.message;$('error').hidden=false;$('results').hidden=true;$('f').disabled=true;model=null;}
