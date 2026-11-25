@@ -1,4 +1,4 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-4';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261125-5';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';
@@ -38,7 +38,7 @@ function draw(){
   const tick=[1,2,2.5,5,10].map(v=>v*base).find(v=>v>=rough);
   const min=Math.floor(low/tick)*tick,max=Math.max(min+tick,Math.ceil(high/tick)*tick);
   const mobile=matchMedia('(max-width:650px)').matches;
-  const W=mobile?440:800,H=mobile?300:350,L=mobile?68:76,R=20,T=25,B=45;
+  const W=mobile?390:800,H=mobile?Math.max(150,Math.min(240,window.innerHeight-470)):350,L=mobile?56:76,R=22,T=12,B=30;
   const x=f=>L+f/limit*(W-L-R), y=v=>T+(max-v)/(max-min)*(H-T-B);
   let out=`<desc id="chart-desc">투자비중 0~${percent(limit)}에 따른 ${geo?'기하 성장률':'산술적 기댓값'}. 켈리 최적 비중 ${$('kelly').textContent}.</desc>`;
   for(let t=min;t<=max+tick/10;t+=tick) {out+=`<line x1="${L}" y1="${y(t)}" x2="${W-R}" y2="${y(t)}" stroke="#e5ece7"/><text x="${L-10}" y="${y(t)+5}" text-anchor="end" fill="#6b7e71" font-size="13">${percent(t)}</text>`;}
@@ -49,9 +49,14 @@ function draw(){
   if(Number.isFinite(model.kelly))out+=`<line x1="${x(optimum)}" y1="${T}" x2="${x(optimum)}" y2="${H-B}" stroke="#4285ec" stroke-dasharray="6 5" stroke-width="1.5"/><circle cx="${x(optimum)}" cy="${y(fn(optimum))}" r="6" fill="#4285ec" stroke="white" stroke-width="2"/>`;
   $('chart').setAttribute('viewBox',`0 0 ${W} ${H}`);$('chart').innerHTML=out;
 }
-for(const id of fields)$(id).addEventListener('input',()=>update());
+for(const id of fields){
+  const input=$(id);let previous=input.value;
+  input.addEventListener('focus',()=>{previous=input.value;input.value='';});
+  input.addEventListener('input',()=>{if(input.value.trim()!=='')update();});
+  input.addEventListener('blur',()=>{if(input.value.trim()==='')input.value=previous;update();});
+}
 for(const id of fields)$(id+'-slider').addEventListener('input',()=>{$(id).value=$(id+'-slider').value;update();});
-$('f').addEventListener('input',()=>{if(!model)return;const f=Math.min(Number($('f').value)/100,model.maxFraction);$('p').value=Number((requiredWinProbability(f,model.a,model.b)*100).toFixed(6));update(false);});
+$('f').addEventListener('input',()=>{if(!model)return;const max=model.maxFraction*100,step=max>=100?5:1,raw=Number($('f').value);const snapped=raw>=max-step/2?max:Math.round(raw/step)*step;$('f').value=snapped;const f=Math.min(snapped/100,model.maxFraction);$('p').value=Number((requiredWinProbability(f,model.a,model.b)*100).toFixed(6));update(false);});
 for(const id of ['arithmetic','geometric']) $(id).addEventListener('click',()=>{mode=id;for(const tab of ['arithmetic','geometric'])$(tab).setAttribute('aria-pressed',String(tab===id));draw();});
 window.addEventListener('resize',draw);
 update();
