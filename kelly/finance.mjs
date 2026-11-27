@@ -1,4 +1,4 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261127-2';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261127-3';
 
 export function winProbabilityForPrices(target,current,profit,loss,inverse=false){
   const {a,b}=priceReturns(current,profit,loss,inverse);
@@ -123,6 +123,10 @@ export function installFinance(api) {
   });
   window.addEventListener('message',event=>{
     if(event.source!==window.parent||!/^http:\/\/(127\.0\.0\.1|localhost):8765$/.test(event.origin)||event.data?.version!==1)return;
+    if(event.data.type==='kelly:prices'){
+      const d=event.data;if(![d.current,d.profit,d.loss].every(Number.isFinite)||!(d.loss>=0&&d.loss<d.current&&d.current<d.profit)||typeof d.symbol!=='string'||! /^[A-Z][A-Z0-9.-]{0,11}$/.test(d.symbol))return;
+      inverse=false;for(const key of ['current','profit','loss'])$(key).value=String(d[key]);setMode('prices');$('calculation-title').value=d.symbol;status('차트 가격을 불러왔습니다.');return;
+    }
     if(event.data.type==='kelly:records'&&Array.isArray(event.data.records)){
       parentOrigin=event.origin;records=event.data.records;bar.hidden=aside.hidden=false;document.body.classList.add('finance-mode');render();status(event.data.saved?'저장했습니다.':'');api.update();
     }else if(event.data.type==='kelly:error'){parentOrigin=event.origin;bar.hidden=aside.hidden=false;document.body.classList.add('finance-mode');status(event.data.message||'저장하지 못했습니다.');}
