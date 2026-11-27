@@ -1,38 +1,41 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261127-1';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261127-2';
 
-export function winProbabilityForPrices(target,current,profit,loss){
-  const {a,b}=priceReturns(current,profit,loss);
+export function winProbabilityForPrices(target,current,profit,loss,inverse=false){
+  const {a,b}=priceReturns(current,profit,loss,inverse);
   if(!Number.isFinite(target)||target<0||target*b>=1)throw Error('이 가격에서는 목표 투자비중을 유지할 수 없습니다. 가격을 조정하거나 고정을 해제하세요.');
   return requiredWinProbability(target,a,b);
 }
 
-export function priceReturns(current, profit, loss) {
+export function priceReturns(current, profit, loss, inverse=false) {
   const values=[current,profit,loss];
   if(values.some(v=>String(v).trim()==='' || !Number.isFinite(Number(v))))throw Error('가격 세 가지를 모두 입력하세요.');
   const [c,w,l]=values.map(Number);
-  if(c<=0 || w<=c || l<0 || l>=c)throw Error('이익 시 가격 > 현재가격 > 손실 시 가격 ≥ 0으로 입력하세요.');
-  const a=(w-c)/c,b=(c-l)/c;
+  if(c<=0 || w<0 || l<0 || (inverse ? w>=c || l<=c : w<=c || l>=c))throw Error('이익 시 가격 > 현재가격 > 손실 시 가격 ≥ 0으로 입력하세요.');
+  const a=inverse?(c-w)/c:(w-c)/c,b=inverse?(l-c)/c:(c-l)/c;
   if(!Number.isFinite(a)||a<=0||b<=0)throw Error('가격 차이를 확인하세요.');
   return {a,b};
 }
 
 export function validateSnapshot(value) {
   if(!value || !['rates','prices'].includes(value.inputMode) || !['arithmetic','geometric'].includes(value.chartMode))throw Error('저장된 계산 형식을 확인하세요.');
+  if(value.inverse!==undefined&&typeof value.inverse!=='boolean')throw Error('인버스 설정을 확인하세요.');
   const keys=['p','a','b','current','profit','loss'];
   if(keys.some(k=>typeof value[k]!=='string'||value[k].length>80))throw Error('저장된 입력값을 확인하세요.');
   if(!value.p.trim()||!value.a.trim()||!value.b.trim())throw Error('입력값을 모두 채우세요.');
-  const rates=value.inputMode==='prices'?priceReturns(value.current,value.profit,value.loss):{a:Number(value.a)/100,b:Number(value.b)/100};
+  const rates=value.inputMode==='prices'?priceReturns(value.current,value.profit,value.loss,value.inverse===true):{a:Number(value.a)/100,b:Number(value.b)/100};
   const model=calculateKelly(Number(value.p)/100,rates.a,rates.b);
-  return {snapshot:Object.fromEntries(['inputMode','chartMode',...keys].map(k=>[k,value[k]])),model};
+  const snapshot=Object.fromEntries(['inputMode','chartMode',...keys].map(k=>[k,value[k]]));if(value.inverse===true)snapshot.inverse=true;return {snapshot,model};
 }
 
 export function installFinance(api) {
   if(new URLSearchParams(location.search).get('mode')!=='finance'||window.parent===window)return;
   const $=id=>document.getElementById(id);
-  let parentOrigin=null,inputMode='rates',records=[],lockedTarget=null,exactProbability=null,lockedPrices=null;
+  let parentOrigin=null,inputMode='rates',inverse=false,records=[],lockedTarget=null,exactProbability=null,lockedPrices=null;
   const bar=document.createElement('div');bar.className='finance-toolbar';bar.hidden=true;
   bar.innerHTML='<div class="tabs" role="group" aria-label="입력 방식"><button id="prices-mode" aria-pressed="true">가격 입력</button><button id="rates-mode" aria-pressed="false">수익률 입력</button></div>';
   document.querySelector('.calculator').prepend(bar);
+  const inverseButton=document.createElement('button');inverseButton.type='button';inverseButton.textContent='인버스';inverseButton.id='inverse-prices';inverseButton.setAttribute('aria-pressed','false');$('invert').after(inverseButton);
+  inverseButton.addEventListener('click',()=>{const probability=api.probability?.()??Number($('p').value)/100;releaseLock();inverse=!inverse;const previous=$('profit').value;$('profit').value=$('loss').value;$('loss').value=previous;$('p').value=String(Number(((1-probability)*100).toFixed(1)));inverseButton.setAttribute('aria-pressed',String(inverse));api.update();});
   const prices=document.createElement('div');prices.className='inputs price-inputs';prices.hidden=true;
   prices.innerHTML='<label for="current">현재가격<div class="field"><input id="current" type="number" min="0" step="any" value="100"></div></label><label for="profit">이익 시 가격<div class="field"><input id="profit" aria-label="이익 시 가격" aria-describedby="profit-rate" type="number" min="0" step="any" value="120"><span id="profit-rate" class="price-rate profit-rate"></span></div></label><label for="loss">손실 시 가격<div class="field"><input id="loss" aria-label="손실 시 가격" aria-describedby="loss-rate" type="number" min="0" step="any" value="80"><span id="loss-rate" class="price-rate loss-rate"></span></div></label>';
   document.querySelector('.inspect').before(prices);
@@ -57,7 +60,7 @@ export function installFinance(api) {
   function setMode(next){
     releaseLock();inputMode=next;prices.hidden=lock.hidden=next!=='prices';
     for(const id of ['a','b'])$(id).closest('.input-control').hidden=next==='prices';
-    $('invert').hidden=next==='prices';
+    $('invert').hidden=next==='prices';inverseButton.hidden=next!=='prices';inverseButton.setAttribute('aria-pressed',String(inverse));
     document.querySelector('.calculator>.inputs').classList.toggle('price-probability',next==='prices');
     for(const mode of ['rates','prices'])$(mode+'-mode').setAttribute('aria-pressed',String(next===mode));
     api.update();
@@ -67,23 +70,23 @@ export function installFinance(api) {
     for(const id of ['current','profit','loss']){
       const slider=$(id+'-slider'),value=Number($(id).value);
       if(id==='current'){
-        const lower=$('loss').value,upper=$('profit').value;
+        const lower=$(inverse?'profit':'loss').value,upper=$(inverse?'loss':'profit').value;
         const valid=lower.trim()!==''&&upper.trim()!==''&&Number.isFinite(Number(lower))&&Number.isFinite(Number(upper))&&Number(lower)>=0&&Number(upper)>Number(lower);
         slider.disabled=!valid;
         if(valid){slider.min=lower;slider.max=upper;}
       }else if(Number.isFinite(value)&&value>Number(slider.max))slider.max=String(Math.ceil(value*2));
       slider.value=$(id).value;
     }
-    const rates=priceReturns($('current').value,$('profit').value,$('loss').value);
+    const rates=priceReturns($('current').value,$('profit').value,$('loss').value,inverse);
     if(lockedTarget!==null){
       const key=['current','profit','loss'].map(id=>$(id).value).join('|');
-      if(key!==lockedPrices){exactProbability=winProbabilityForPrices(lockedTarget,$('current').value,$('profit').value,$('loss').value);lockedPrices=key;}
+      if(key!==lockedPrices){exactProbability=winProbabilityForPrices(lockedTarget,$('current').value,$('profit').value,$('loss').value,inverse);lockedPrices=key;}
       $('p').value=String(Number((exactProbability*100).toFixed(1)));
     }
     $('a').value=String(rates.a*100);$('b').value=String(rates.b*100);
     $('profit-rate').textContent=`+${api.percent(rates.a)}`;$('loss-rate').textContent=`−${api.percent(rates.b)}`;
   };
-  api.afterUpdate=valid=>{$('save-button').disabled=!valid; if(!valid){$('profit-rate').textContent='';$('loss-rate').textContent='';}};
+  api.afterUpdate=valid=>{inverseButton.disabled=!valid;$('save-button').disabled=!valid; if(!valid){$('profit-rate').textContent='';$('loss-rate').textContent='';}};
   api.probability=()=>lockedTarget!==null?exactProbability:null;
   api.targetFraction=()=>inputMode==='prices'?lockedTarget:null;
   for(const id of ['current','profit','loss']){
@@ -102,7 +105,7 @@ export function installFinance(api) {
       const date=document.createElement('time');date.textContent=new Date(record.createdAt).toLocaleString('ko-KR');
       button.append(title,detail,date);
       button.addEventListener('click',()=>{
-        try{const {snapshot}=validateSnapshot(record.snapshot);for(const key of ['p','a','b','current','profit','loss'])$(key).value=snapshot[key];api.setChartMode(snapshot.chartMode);setMode(snapshot.inputMode);$('calculation-title').value=record.title;status('불러왔습니다.');}catch(error){status(error.message);}
+        try{const {snapshot}=validateSnapshot(record.snapshot);inverse=snapshot.inverse===true;for(const key of ['p','a','b','current','profit','loss'])$(key).value=snapshot[key];api.setChartMode(snapshot.chartMode);setMode(snapshot.inputMode);$('calculation-title').value=record.title;status('불러왔습니다.');}catch(error){status(error.message);}
       });list.append(button);
     }
   }
@@ -111,7 +114,7 @@ export function installFinance(api) {
     event.preventDefault();if(!parentOrigin)return;
     try{
       const title=$('calculation-title').value.trim();if(!title)throw Error('제목을 입력하세요.');
-      api.update();const raw={inputMode,chartMode:api.chartMode(),...Object.fromEntries(['p','a','b','current','profit','loss'].map(k=>[k,$(k).value]))};
+      api.update();const raw={inputMode,...(inputMode==='prices'&&inverse?{inverse:true}:{}),chartMode:api.chartMode(),...Object.fromEntries(['p','a','b','current','profit','loss'].map(k=>[k,$(k).value]))};
       if(lockedTarget!==null)raw.p=String(exactProbability*100);
       const {snapshot,model}=validateSnapshot(raw);
       window.parent.postMessage({type:'kelly:save',version:1,title,snapshot,result:{kelly:Number.isFinite(model.kelly)?model.kelly:null,edge:model.edge}},parentOrigin);

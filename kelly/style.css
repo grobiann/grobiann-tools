@@ -63,3 +63,5 @@ main{padding:18px 14px 0}header{padding-bottom:16px}.brand,.page-title{font-size
 @media(max-width:780px){.finance-mode main{display:block}.finance-mode .saved-calculations{position:static;max-height:none;margin:24px 0}.finance-mode .price-inputs{grid-template-columns:1fr}.price-inputs label{display:flex;justify-content:space-between;align-items:center;gap:12px}.price-inputs .field{width:190px;max-width:62%;margin:0}.price-inputs .price-rate{font-size:12px}.finance-mode .proof{padding-left:0;padding-right:0}}
 
 .price-control{min-width:0}.price-control>input[type=range]{width:100%;margin:8px 0 0;accent-color:#147858}.inspect .target-lock{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:12px}.inspect .target-lock input{width:16px;height:16px;margin:0}.target-lock[hidden]{display:none}
+
+#inverse-prices{font:inherit;font-size:12px;border:1px solid #cbdad2;border-radius:6px;padding:4px 9px;background:#f6f9f7;color:#466354}#inverse-prices[aria-pressed=true]{background:#e8ddf5;color:#633c88;border-color:#aa87cb}

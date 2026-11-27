@@ -26,3 +26,12 @@ test('locked allocation inversely solves probability without rounding drift',()=
   assert.throws(()=>winProbabilityForPrices(1,100,120,0));
   assert.throws(()=>winProbabilityForPrices(1,120,120,80));
 });
+
+test('inverse prices reverse payoff and support losses exceeding 100 percent',()=>{
+ assert.deepEqual(priceReturns(100,80,140,true),{a:.2,b:.4});
+ assert.deepEqual(priceReturns(100,80,250,true),{a:.2,b:1.5});
+ const raw={inputMode:'prices',chartMode:'geometric',inverse:true,p:'40',a:'20',b:'40',current:'100',profit:'80',loss:'140'};
+ const {snapshot,model}=validateSnapshot(raw);assert.equal(snapshot.inverse,true);assert.ok(Math.abs(model.edge+.16)<1e-12);
+ assert.throws(()=>validateSnapshot({...raw,inverse:'yes'}));
+ assert.throws(()=>priceReturns(100,140,80,true));
+});
