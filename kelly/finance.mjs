@@ -1,4 +1,4 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261126-7';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261127-1';
 
 export function winProbabilityForPrices(target,current,profit,loss){
   const {a,b}=priceReturns(current,profit,loss);
@@ -31,7 +31,7 @@ export function installFinance(api) {
   const $=id=>document.getElementById(id);
   let parentOrigin=null,inputMode='rates',records=[],lockedTarget=null,exactProbability=null,lockedPrices=null;
   const bar=document.createElement('div');bar.className='finance-toolbar';bar.hidden=true;
-  bar.innerHTML='<div class="tabs" role="group" aria-label="입력 방식"><button id="rates-mode" aria-pressed="true">수익률 입력</button><button id="prices-mode" aria-pressed="false">가격 입력</button></div>';
+  bar.innerHTML='<div class="tabs" role="group" aria-label="입력 방식"><button id="prices-mode" aria-pressed="true">가격 입력</button><button id="rates-mode" aria-pressed="false">수익률 입력</button></div>';
   document.querySelector('.calculator').prepend(bar);
   const prices=document.createElement('div');prices.className='inputs price-inputs';prices.hidden=true;
   prices.innerHTML='<label for="current">현재가격<div class="field"><input id="current" type="number" min="0" step="any" value="100"></div></label><label for="profit">이익 시 가격<div class="field"><input id="profit" aria-label="이익 시 가격" aria-describedby="profit-rate" type="number" min="0" step="any" value="120"><span id="profit-rate" class="price-rate profit-rate"></span></div></label><label for="loss">손실 시 가격<div class="field"><input id="loss" aria-label="손실 시 가격" aria-describedby="loss-rate" type="number" min="0" step="any" value="80"><span id="loss-rate" class="price-rate loss-rate"></span></div></label>';
@@ -124,5 +124,6 @@ export function installFinance(api) {
       parentOrigin=event.origin;records=event.data.records;bar.hidden=aside.hidden=false;document.body.classList.add('finance-mode');render();status(event.data.saved?'저장했습니다.':'');api.update();
     }else if(event.data.type==='kelly:error'){parentOrigin=event.origin;bar.hidden=aside.hidden=false;document.body.classList.add('finance-mode');status(event.data.message||'저장하지 못했습니다.');}
   });
+  setMode('prices');
   window.parent.postMessage({type:'kelly:ready',version:1},'*');
 }
