@@ -1,5 +1,5 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261127-3';
-import {installFinance} from './finance.mjs?v=20261127-3';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261127-4';
+import {installFinance,inputDecimal} from './finance.mjs?v=20261127-4';
 const $ = id => document.getElementById(id);
 const fields = ['p','a','b'];
 let model, mode='geometric';
@@ -12,6 +12,7 @@ try {
 } catch {}
 function update(reset=true) {
   try {
+    for(const id of fields)if(Number($(id).value)!==Number(inputDecimal($(id).value))||/\.\d{2}/.test($(id).value))$(id).value=inputDecimal($(id).value);
     finance.beforeUpdate?.();
     if(fields.some(id=>$(id).value.trim()==='')) throw Error('세 가지 값을 모두 입력해라.');
     model=calculateKelly(finance.probability?.()??Number($('p').value)/100,Number($('a').value)/100,Number($('b').value)/100);

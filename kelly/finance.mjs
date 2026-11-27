@@ -1,4 +1,6 @@
-import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261127-3';
+import {calculateKelly,requiredWinProbability} from './kelly.mjs?v=20261127-4';
+
+export function inputDecimal(value){return String(value).trim()!==''&&Number.isFinite(Number(value))?String(Number(Number(value).toFixed(1))):value;}
 
 export function winProbabilityForPrices(target,current,profit,loss,inverse=false){
   const {a,b}=priceReturns(current,profit,loss,inverse);
@@ -37,7 +39,7 @@ export function installFinance(api) {
   const inverseButton=document.createElement('button');inverseButton.type='button';inverseButton.textContent='인버스';inverseButton.id='inverse-prices';inverseButton.setAttribute('aria-pressed','false');$('invert').after(inverseButton);
   inverseButton.addEventListener('click',()=>{const probability=api.probability?.()??Number($('p').value)/100;releaseLock();inverse=!inverse;const previous=$('profit').value;$('profit').value=$('loss').value;$('loss').value=previous;$('p').value=String(Number(((1-probability)*100).toFixed(1)));inverseButton.setAttribute('aria-pressed',String(inverse));api.update();});
   const prices=document.createElement('div');prices.className='inputs price-inputs';prices.hidden=true;
-  prices.innerHTML='<label for="current">현재가격<div class="field"><input id="current" type="number" min="0" step="any" value="100"></div></label><label for="profit">이익 시 가격<div class="field"><input id="profit" aria-label="이익 시 가격" aria-describedby="profit-rate" type="number" min="0" step="any" value="120"><span id="profit-rate" class="price-rate profit-rate"></span></div></label><label for="loss">손실 시 가격<div class="field"><input id="loss" aria-label="손실 시 가격" aria-describedby="loss-rate" type="number" min="0" step="any" value="80"><span id="loss-rate" class="price-rate loss-rate"></span></div></label>';
+  prices.innerHTML='<label for="current">현재가격<div class="field"><input id="current" type="number" min="0" step="0.1" value="100"></div></label><label for="profit">이익 시 가격<div class="field"><input id="profit" aria-label="이익 시 가격" aria-describedby="profit-rate" type="number" min="0" step="0.1" value="120"><span id="profit-rate" class="price-rate profit-rate"></span></div></label><label for="loss">손실 시 가격<div class="field"><input id="loss" aria-label="손실 시 가격" aria-describedby="loss-rate" type="number" min="0" step="0.1" value="80"><span id="loss-rate" class="price-rate loss-rate"></span></div></label>';
   document.querySelector('.inspect').before(prices);
   for(const id of ['current','profit','loss']){
     const label=$(id).closest('label'),control=document.createElement('div');control.className='price-control';
@@ -68,6 +70,7 @@ export function installFinance(api) {
   api.beforeUpdate=()=>{
     if(inputMode!=='prices')return;
     for(const id of ['current','profit','loss']){
+      if(Number($(id).value)!==Number(inputDecimal($(id).value))||/\.\d{2}/.test($(id).value))$(id).value=inputDecimal($(id).value);
       const slider=$(id+'-slider'),value=Number($(id).value);
       if(id==='current'){
         const lower=$(inverse?'profit':'loss').value,upper=$(inverse?'loss':'profit').value;
@@ -125,7 +128,7 @@ export function installFinance(api) {
     if(event.source!==window.parent||!/^http:\/\/(127\.0\.0\.1|localhost):8765$/.test(event.origin)||event.data?.version!==1)return;
     if(event.data.type==='kelly:prices'){
       const d=event.data;if(![d.current,d.profit,d.loss].every(Number.isFinite)||!(d.loss>=0&&d.loss<d.current&&d.current<d.profit)||typeof d.symbol!=='string'||! /^[A-Z][A-Z0-9.-]{0,11}$/.test(d.symbol))return;
-      inverse=false;for(const key of ['current','profit','loss'])$(key).value=String(d[key]);setMode('prices');$('calculation-title').value=d.symbol;status('차트 가격을 불러왔습니다.');return;
+      inverse=false;for(const key of ['current','profit','loss'])$(key).value=String(d[key]);setMode('prices');$('calculation-title').value=d.symbol;status($('save-button').disabled?'반올림한 가격을 확인하세요.':'차트 가격을 불러왔습니다.');return;
     }
     if(event.data.type==='kelly:records'&&Array.isArray(event.data.records)){
       parentOrigin=event.origin;records=event.data.records;bar.hidden=aside.hidden=false;document.body.classList.add('finance-mode');render();status(event.data.saved?'저장했습니다.':'');api.update();

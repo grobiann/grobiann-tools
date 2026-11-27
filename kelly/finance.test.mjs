@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {priceReturns,validateSnapshot,winProbabilityForPrices} from './finance.mjs';
+import {inputDecimal,priceReturns,validateSnapshot,winProbabilityForPrices} from './finance.mjs';
 test('price inputs convert relative to current price',()=>{
   assert.deepEqual(priceReturns('100','120','80'),{a:.2,b:.2});
   assert.deepEqual(priceReturns('200','300','0'),{a:.5,b:1});
@@ -34,4 +34,11 @@ test('inverse prices reverse payoff and support losses exceeding 100 percent',()
  const {snapshot,model}=validateSnapshot(raw);assert.equal(snapshot.inverse,true);assert.ok(Math.abs(model.edge+.16)<1e-12);
  assert.throws(()=>validateSnapshot({...raw,inverse:'yes'}));
  assert.throws(()=>priceReturns(100,140,80,true));
+});
+
+test('all price entry paths quantize to one decimal before calculation',()=>{
+ assert.equal(inputDecimal('36.1803'),'36.2');assert.equal(inputDecimal('40.06'),'40.1');assert.equal(inputDecimal('30'),'30');assert.equal(inputDecimal(''),'');
+ const raw=['36.1803','40.06','30.04'].map(inputDecimal);
+ assert.deepEqual(priceReturns(...raw),priceReturns('36.2','40.1','30.0'));
+ assert.throws(()=>priceReturns(...['10.01','10.04','9.98'].map(inputDecimal)));
 });
